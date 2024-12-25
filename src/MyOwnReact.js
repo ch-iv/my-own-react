@@ -164,11 +164,23 @@ function updateFunctionComponent(fiber) {
   reconcileChildren(fiber, children);
 }
 
-function useState(initial) {
+function useState(initial, ...args) {
   const oldHook =
     wipFiber.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks[hookIndex];
+
+  // We resolve the state differently depending on if we have to use the initial value
+  // and if the initial value is a function.
+  let resolvedState;
+  if (oldHook) {
+    resolvedState = oldHook.state;
+  } else if (typeof initial === "function") {
+    // We need to call initial if it's a function
+    resolvedState = initial(...args);
+  } else {
+    resolvedState = initial;
+  }
   const hook = {
-    state: oldHook ? oldHook.state : initial,
+    state: resolvedState,
     queue: [],
   };
 
